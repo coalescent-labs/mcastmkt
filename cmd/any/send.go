@@ -18,14 +18,13 @@ var (
 	sendInterface string
 	sendDumpBytes bool
 
-	sendInterval uint64 = 1000
-	sendTtl      int    = 1
-	sendText     string = "This is test number: {c}"
+	sendInterval      uint64 = 1000
+	sendStatsInterval uint64 = 30
+	sendTtl           int    = 1
+	sendText          string = "This is test number: {c}"
 
-	sendNumBytes        uint64 = 0
-	sendTotalNumBytes   uint64 = 0
-	sendNumPackets      uint64 = 0
-	sendTotalNumPackets uint64 = 0
+	sendNumBytes   uint64 = 0
+	sendNumPackets uint64 = 0
 
 	sendCmd = &cobra.Command{
 		Use:   "send",
@@ -36,13 +35,11 @@ var (
 )
 
 func sendStatsPrinter() {
-	for range time.Tick(time.Second * 60) {
+	for range time.Tick(time.Second * time.Duration(sendStatsInterval)) {
 		sentMsg := atomic.SwapUint64(&sendNumPackets, 0)
-		sentTotalMsg := atomic.SwapUint64(&sendTotalNumPackets, 0)
 		sentBytes := atomic.SwapUint64(&sendNumBytes, 0)
-		sentTotalBytes := atomic.SwapUint64(&sendTotalNumBytes, 0)
-		log.Printf("STAT Send msg: %d [Tot %d], Send bytes: %s [Tot: %s]",
-			sentMsg, sentTotalMsg, util.ByteCountIEC(sentBytes), util.ByteCountIEC(sentTotalBytes))
+		log.Printf("STAT Send msg: %d, Send bytes: %s",
+			sentMsg, util.ByteCountIEC(sentBytes))
 	}
 }
 
@@ -107,8 +104,8 @@ func send(*cobra.Command, []string) error {
 			log.Fatal("Write failed:", err)
 		}
 
-		atomic.AddUint64(&sendTotalNumPackets, 1)
-		atomic.AddUint64(&sendTotalNumBytes, uint64(numBytes))
+		atomic.AddUint64(&sendNumPackets, 1)
+		atomic.AddUint64(&sendNumBytes, uint64(numBytes))
 
 		if sendDumpBytes {
 			log.Printf(strings.Repeat("-", 80))
@@ -126,6 +123,7 @@ func init() {
 	sendCmd.PersistentFlags().Uint64VarP(&sendInterval, "interval", "n", 1000, "Interval between sending messages (milliseconds). Default is 1000ms")
 	sendCmd.PersistentFlags().IntVarP(&sendTtl, "ttl", "t", 1, "Time to live. Default is 1")
 	sendCmd.PersistentFlags().StringVar(&sendText, "text", "This is test number: {c}", "Text/data to send to the receiver. Use '{c}' to send counter")
+	sendCmd.PersistentFlags().Uint64VarP(&sendStatsInterval, "stats-interval", "s", 30, "Interval between printing stats (seconds). Default is 30s")
 	_ = sendCmd.MarkPersistentFlagRequired("address")
 	_ = viper.BindPFlag("address", listenCmd.PersistentFlags().Lookup("address"))
 	_ = viper.BindPFlag("interface", listenCmd.PersistentFlags().Lookup("interface"))
@@ -133,4 +131,5 @@ func init() {
 	_ = viper.BindPFlag("interval", listenCmd.PersistentFlags().Lookup("interval"))
 	_ = viper.BindPFlag("ttl", listenCmd.PersistentFlags().Lookup("ttl"))
 	_ = viper.BindPFlag("text", listenCmd.PersistentFlags().Lookup("text"))
+	_ = viper.BindPFlag("stats-interval", listenCmd.PersistentFlags().Lookup("stats-interval"))
 }
