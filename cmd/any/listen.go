@@ -125,7 +125,7 @@ func init() {
 	listenCmd.PersistentFlags().StringVarP(&listenInterface, "interface", "i", "", "The multicast listener interface name or IP address")
 	listenCmd.PersistentFlags().BoolVarP(&listenDumpBytes, "dump", "d", false, "Dump the raw bytes of the message")
 	listenCmd.PersistentFlags().IntVarP(&listenReceiveBufferSize, "receive-buffer-size", "r", 0, "Socket receive buffer size in bytes (0 use system default)")
-	listenCmd.PersistentFlags().Uint64VarP(&listenStatsInterval, "stats-interval", "s", 30, "Statistics print interval in seconds. Default is 30s")
+	listenCmd.PersistentFlags().Uint64VarP(&listenStatsInterval, "stats-interval", "s", 30, "Statistics print interval in seconds")
 	_ = listenCmd.MarkPersistentFlagRequired("address")
 	_ = viper.BindPFlag("address", listenCmd.PersistentFlags().Lookup("address"))
 	_ = viper.BindPFlag("interface", listenCmd.PersistentFlags().Lookup("interface"))
