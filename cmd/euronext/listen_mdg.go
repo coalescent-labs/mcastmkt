@@ -35,7 +35,7 @@ var (
 )
 
 func statsPrinter() {
-	for range time.Tick(time.Second * 60) {
+	for range time.Tick(time.Second * time.Duration(listenStatsInterval)) {
 		recvMsg := atomic.SwapUint64(&mdgNumPackets, 0)
 		recvTotalMsg := atomic.SwapUint64(&mdgTotalNumPackets, 0)
 		recvBytes := atomic.SwapUint64(&mdgNumBytes, 0)

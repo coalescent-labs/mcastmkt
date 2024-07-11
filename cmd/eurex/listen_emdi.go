@@ -36,7 +36,7 @@ Packets with the same SenderCompID (field length: 1 Byte) have contiguous sequen
 )
 
 func statsPrinter() {
-	for range time.Tick(time.Second * 60) {
+	for range time.Tick(time.Second * time.Duration(listenStatsInterval)) {
 		recvMsg := atomic.SwapUint64(&emdiNumPackets, 0)
 		recvTotalMsg := atomic.SwapUint64(&emdiTotalNumPackets, 0)
 		recvBytes := atomic.SwapUint64(&emdiNumBytes, 0)

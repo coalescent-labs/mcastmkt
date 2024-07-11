@@ -18,6 +18,8 @@ var (
 	listenDumpBytes         bool
 	listenReceiveBufferSize int
 
+	listenStatsInterval uint64 = 30
+
 	listenTotalNumBytes   uint64 = 0
 	listenNumBytes        uint64 = 0
 	listenNumPackets      uint64 = 0
@@ -36,7 +38,7 @@ const (
 )
 
 func listenStatsPrinter() {
-	for range time.Tick(time.Second * 60) {
+	for range time.Tick(time.Second * time.Duration(listenStatsInterval)) {
 		recvMsg := atomic.SwapUint64(&listenNumPackets, 0)
 		recvTotalMsg := atomic.SwapUint64(&listenTotalNumPackets, 0)
 		recvBytes := atomic.SwapUint64(&listenNumBytes, 0)
@@ -122,10 +124,12 @@ func init() {
 	listenCmd.PersistentFlags().StringVarP(&listenAddress, "address", "a", "224.0.50.59:59001", "The multicast address and port")
 	listenCmd.PersistentFlags().StringVarP(&listenInterface, "interface", "i", "", "The multicast listener interface name or IP address")
 	listenCmd.PersistentFlags().BoolVarP(&listenDumpBytes, "dump", "d", false, "Dump the raw bytes of the message")
-	listenCmd.PersistentFlags().IntVarP(&listenReceiveBufferSize, "receiveBufferSize", "r", 0, "Socket receive buffer size in bytes (0 use system default)")
+	listenCmd.PersistentFlags().IntVarP(&listenReceiveBufferSize, "receive-buffer-size", "r", 0, "Socket receive buffer size in bytes (0 use system default)")
+	listenCmd.PersistentFlags().Uint64VarP(&listenStatsInterval, "stats-interval", "s", 30, "Statistics print interval in seconds. Default is 30s")
 	_ = listenCmd.MarkPersistentFlagRequired("address")
 	_ = viper.BindPFlag("address", listenCmd.PersistentFlags().Lookup("address"))
 	_ = viper.BindPFlag("interface", listenCmd.PersistentFlags().Lookup("interface"))
 	_ = viper.BindPFlag("dump", listenCmd.PersistentFlags().Lookup("dump"))
-
+	_ = viper.BindPFlag("receive-buffer-size", listenCmd.PersistentFlags().Lookup("receive-buffer-size"))
+	_ = viper.BindPFlag("stats-interval", listenCmd.PersistentFlags().Lookup("stats-interval"))
 }
