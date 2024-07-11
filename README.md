@@ -13,7 +13,7 @@ by sending and receiving multicast packets with the `any/send` and `any/listen` 
 
 ## Build
 
-You can simply build the eurexctl project with the provided Makefile.
+You can simply build the mcastmkt project with the provided Makefile.
 
 ```
 # build the binary
@@ -46,7 +46,7 @@ Available Commands:
   help        Help about any command
 
 Flags:
-  -c, --config string   config file (default is $HOME/.eurexctl.yaml)
+  -c, --config string   config file (default is $HOME/.mcastmkt.yaml)
   -h, --help            help for mcastmkt
   -v, --version         version for mcastmkt
 

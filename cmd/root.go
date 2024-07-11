@@ -31,7 +31,7 @@ func Execute() error {
 func init() {
 	// Allow to load some default config from file (unused for now)
 	cobra.OnInitialize(initConfig)
-	mcastmktCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.eurexctl.yaml)")
+	mcastmktCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.mcastmkt.yaml)")
 	_ = viper.BindPFlag("config", mcastmktCmd.PersistentFlags().Lookup("config"))
 
 	// Add subcommands here
@@ -50,12 +50,12 @@ func initConfig() {
 		viper.AddConfigPath(home)
 		viper.AddConfigPath(".")
 		viper.SetConfigType("yaml")
-		viper.SetConfigFile(".eurexctl")
+		viper.SetConfigFile(".mcastmkt")
 	}
 
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Config file used for eurexctl: ", viper.ConfigFileUsed())
+		fmt.Println("Config file used for mcastmkt: ", viper.ConfigFileUsed())
 	}
 }
