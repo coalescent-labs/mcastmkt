@@ -1,0 +1,36 @@
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  releases-matrix:
+    name: Release Go Binary
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows]
+        goarch: [amd64]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set VERSION env
+      run: |
+        echo "PACKAGE=github.com/coalescent-labs/mcastmkt" >> $GITHUB_ENV
+        echo "GIT_VERSION=$(echo ${GITHUB_REF} | rev | cut -d'/' -f 1 | rev )" >> ${GITHUB_ENV}
+        echo "GIT_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+        echo "GIT_COMMIT=${GITHUB_SHA}" >> $GITHUB_ENV
+    - name: Environment Printer
+      uses: managedkaos/print-env@v1.0
+    - uses: wangyoucao577/go-release-action@v1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goversion: 1.22
+        goos: ${{ matrix.goos }}
+        goarch: ${{ matrix.goarch }}
+        build_flags: -v
+        binary_name: "mcastmkt"
+        ldflags: "-w -s -X '${{PACKAGE}}/pkg/version.version=$${{GIT_VERSION}}' -X '${{PACKAGE}}/pkg/version.commit=${{GIT_COMMIT}}' -X '${{PACKAGE}}/pkg/version.branch=${{GIT_BRANCH}}'"
+
