@@ -19,8 +19,8 @@ var (
 )
 
 func init() {
-	listenCmd.PersistentFlags().StringVarP(&listenAddress, "address", "a", "224.0.50.59:59001", "The multicast address and port.")
-	listenCmd.PersistentFlags().StringVarP(&listenInterface, "interface", "i", "", "The multicast listener interface name")
+	listenCmd.PersistentFlags().StringVarP(&listenAddress, "address", "a", "224.0.50.59:59001", "The multicast address and port")
+	listenCmd.PersistentFlags().StringVarP(&listenInterface, "interface", "i", "", "The multicast listener interface name or IP address")
 	listenCmd.PersistentFlags().BoolVarP(&listenDumpBytes, "dump", "d", false, "Dump the raw bytes of the message")
 	listenCmd.PersistentFlags().IntVarP(&listenReceiveBufferSize, "receiveBufferSize", "r", 0, "Socket receive buffer size in bytes (0 use system default)")
 	_ = listenCmd.MarkPersistentFlagRequired("address")

@@ -58,7 +58,7 @@ func listenMdg(*cobra.Command, []string) error {
 	var intf *net.Interface = nil
 
 	if listenInterface != "" {
-		intf, err = net.InterfaceByName(listenInterface)
+		intf, err = util.GetInterfaceFromIPorName(listenInterface)
 		if err != nil {
 			return err
 		}
