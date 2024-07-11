@@ -1,0 +1,136 @@
+package any
+
+import (
+	"fmt"
+	"github.com/coalescent-labs/mcastmkt/pkg/util"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"golang.org/x/net/ipv4"
+	"log"
+	"net"
+	"strings"
+	"sync/atomic"
+	"time"
+)
+
+var (
+	sendAddress   string
+	sendInterface string
+	sendDumpBytes bool
+
+	sendInterval uint64 = 1000
+	sendTtl      int    = 1
+	sendText     string = "This is test number: {c}"
+
+	sendNumBytes        uint64 = 0
+	sendTotalNumBytes   uint64 = 0
+	sendNumPackets      uint64 = 0
+	sendTotalNumPackets uint64 = 0
+
+	sendCmd = &cobra.Command{
+		Use:   "send",
+		Short: "Send multicast test message continuously in a loop at specified interval until the program is terminated",
+		Long:  ``,
+		RunE:  send,
+	}
+)
+
+func sendStatsPrinter() {
+	for range time.Tick(time.Second * 60) {
+		sentMsg := atomic.SwapUint64(&sendNumPackets, 0)
+		sentTotalMsg := atomic.SwapUint64(&sendTotalNumPackets, 0)
+		sentBytes := atomic.SwapUint64(&sendNumBytes, 0)
+		sentTotalBytes := atomic.SwapUint64(&sendTotalNumBytes, 0)
+		log.Printf("STAT Send msg: %d [Tot %d], Send bytes: %s [Tot: %s]",
+			sentMsg, sentTotalMsg, util.ByteCountIEC(sentBytes), util.ByteCountIEC(sentTotalBytes))
+	}
+}
+
+func send(*cobra.Command, []string) error {
+	// Parse the string address
+	addr, err := net.ResolveUDPAddr("udp4", sendAddress)
+	if err != nil {
+		return err
+	}
+
+	var intf *net.Interface = nil
+
+	if sendInterface != "" {
+		intf, err = util.GetInterfaceFromIPorName(sendInterface)
+		if err != nil {
+			return err
+		}
+	}
+
+	// send to the multicast address
+	conn, err := net.DialUDP("udp4", nil, addr)
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close()
+
+	packetConn := ipv4.NewPacketConn(conn)
+	err = packetConn.SetMulticastTTL(sendTtl)
+	if err != nil {
+		return err
+	}
+
+	err = packetConn.SetControlMessage(ipv4.FlagTTL|ipv4.FlagSrc|ipv4.FlagDst|ipv4.FlagInterface, true)
+	if err != nil {
+		return err
+	}
+
+	go sendStatsPrinter()
+
+	log.Printf("Sending to %s@%s  %v\n", sendAddress, util.StringIfEmpty(sendInterface, "default"), intf)
+
+	var text func(int) string
+	if strings.Contains(sendText, "{c}") {
+		subStr := strings.Replace(sendText, "{c}", "%d", 1)
+		text = func(x int) string {
+			return fmt.Sprintf(subStr, x)
+		}
+	} else {
+		text = func(x int) string { return sendText }
+	}
+
+	var c = 0
+	var numBytes int
+
+	// loop forever sending messages
+	for range time.Tick(time.Millisecond * time.Duration(sendInterval)) {
+		c++
+		msg := []byte(text(c))
+		numBytes, err = conn.Write(msg)
+		if err != nil {
+			log.Fatal("Write failed:", err)
+		}
+
+		atomic.AddUint64(&sendTotalNumPackets, 1)
+		atomic.AddUint64(&sendTotalNumBytes, uint64(numBytes))
+
+		if sendDumpBytes {
+			log.Printf(strings.Repeat("-", 80))
+			util.DumpByteSlice(msg)
+		}
+	}
+
+	return nil
+}
+
+func init() {
+	sendCmd.PersistentFlags().StringVarP(&sendAddress, "address", "a", "224.0.50.59:59001", "The multicast address and port")
+	sendCmd.PersistentFlags().StringVarP(&sendInterface, "interface", "i", "", "The multicast send interface name or IP address")
+	sendCmd.PersistentFlags().BoolVarP(&sendDumpBytes, "dump", "d", false, "Dump the raw bytes of the sent message")
+	sendCmd.PersistentFlags().Uint64VarP(&sendInterval, "interval", "n", 1000, "Interval between sending messages (milliseconds). Default is 1000ms")
+	sendCmd.PersistentFlags().IntVarP(&sendTtl, "ttl", "t", 1, "Time to live. Default is 1")
+	sendCmd.PersistentFlags().StringVar(&sendText, "text", "This is test number: {c}", "Text/data to send to the receiver. Use '{c}' to send counter")
+	_ = sendCmd.MarkPersistentFlagRequired("address")
+	_ = viper.BindPFlag("address", listenCmd.PersistentFlags().Lookup("address"))
+	_ = viper.BindPFlag("interface", listenCmd.PersistentFlags().Lookup("interface"))
+	_ = viper.BindPFlag("dump", listenCmd.PersistentFlags().Lookup("dump"))
+	_ = viper.BindPFlag("interval", listenCmd.PersistentFlags().Lookup("interval"))
+	_ = viper.BindPFlag("ttl", listenCmd.PersistentFlags().Lookup("ttl"))
+	_ = viper.BindPFlag("text", listenCmd.PersistentFlags().Lookup("text"))
+}

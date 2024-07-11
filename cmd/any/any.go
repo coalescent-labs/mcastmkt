@@ -15,5 +15,6 @@ var (
 func init() {
 	// Add subcommands here
 	AnyCmd.AddCommand(listenCmd)
+	AnyCmd.AddCommand(sendCmd)
 
 }
