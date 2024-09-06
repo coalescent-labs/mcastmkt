@@ -29,7 +29,7 @@ build:
 
 build_all:
 	$(foreach GOOS, $(PLATFORMS),\
-	$(foreach GOARCH, $(ARCHITECTURES), $(shell export GOOS=$(GOOS); export GOARCH=$(GOARCH); CGO_ENABLED=0; go build ${LDFLAGS} -v -o bin/$(BINARY)-$(GOOS)-$(GOARCH))))
+	$(foreach GOARCH, $(ARCHITECTURES), $(shell GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build ${LDFLAGS} -v -o bin/$(BINARY)-$(GOOS)-$(GOARCH))))
 
 run:
 	chmod +x bin/mcastmkt
