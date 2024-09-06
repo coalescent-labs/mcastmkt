@@ -55,10 +55,10 @@ Use "mcastmkt [command] --help" for more information about a command.
 
 Examples:
 ```
-# Listen to multicast traffinc and dump any received packed to stdout
+# Listen to multicast traffic and dump any received packed to stdout
 mcastmkt any listen -a 224.0.212.78:40078 -i eno1 -d
 
-# Send muldicast test packets...
+# Send multicast test packets...
 mcastmkt any send -a 224.50.50.59:59001 -d -i 192.168.178.128 -t 1 -n 5000
 # ... and listen to them
 mcastmkt any listen -a 224.50.50.59:59001 -d -i 192.168.178.128
