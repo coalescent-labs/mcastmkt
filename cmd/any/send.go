@@ -59,8 +59,8 @@ func send(*cobra.Command, []string) error {
 		}
 	}
 
-	// send to the multicast address
-	conn, err := net.DialUDP("udp4", nil, addr)
+	// create a UDP connection
+	conn, err := net.ListenPacket("udp4", "")
 	if err != nil {
 		return err
 	}
@@ -68,6 +68,13 @@ func send(*cobra.Command, []string) error {
 	defer conn.Close()
 
 	packetConn := ipv4.NewPacketConn(conn)
+	if intf != nil {
+		err = packetConn.SetMulticastInterface(intf)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = packetConn.SetMulticastTTL(sendTtl)
 	if err != nil {
 		return err
@@ -99,7 +106,7 @@ func send(*cobra.Command, []string) error {
 	for range time.Tick(time.Millisecond * time.Duration(sendInterval)) {
 		c++
 		msg := []byte(text(c))
-		numBytes, err = conn.Write(msg)
+		numBytes, err = packetConn.WriteTo(msg, nil, addr)
 		if err != nil {
 			log.Fatal("Write failed:", err)
 		}
